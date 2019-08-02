@@ -1,0 +1,278 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.1'
+      jupytext_version: 1.1.3
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+# Pandas
+
+## Introduction to Pandas
+
+This section is basically for importing pandas, reading files and knowing how to select using the iloc method and the shortcuts.
+
+Important functions are **df.info()** and **df[column].value_counts()** and **pd.read_csv** or **pd.read_excel**
+
+```{python}
+# importing pandas
+import pandas as pd
+```
+
+```{python}
+#Read a file
+test = pd.read_excel('gasolina.xlsx')
+```
+
+```{python}
+#Describing the set
+print(test.shape)
+```
+
+```{python}
+print(test.head())
+```
+
+```{python}
+print(test.dtypes)
+```
+
+```{python}
+print(test.info())
+```
+
+```{python}
+# Selection using labels
+print(test.loc[14])
+print('-----------')
+print(test.loc[14,"Marca"])
+print('-----------')
+print(test.head()["Marca"])
+print('-----------')
+print(test.head()[["Marca", "Cilindros"]])
+print('-----------')
+print(test.loc[50 : 53])
+```
+
+```{python}
+# Getting frequency tables of a column (attribute)
+brands_frequency = test["Marca"].value_counts()
+print(brands_frequency)
+# Shortcuts for selection on series (i.e. only one column on the data set) work different
+print(brands_frequency.loc["AUDI"])
+```
+
+## Exploring Data Intro
+
+This part is basically about descriptive statistics and boolean indexing
+
+- operations are vectorized
+- descirptive statistics summary
+- **df.describe** and s.describe
+- boolean indexing
+
+```{python}
+#operations are vectorized on pandas (just as they are on numpy)
+cilindros_series = test["Cilindros"]
+print(cilindros_series.head() +5)
+print(cilindros_series.head()  * 5)
+print(cilindros_series.head()  / 2)
+```
+
+```{python}
+#pandas have the normal descriptive tools
+print(cilindros_series.min())
+print(cilindros_series.max())
+print(cilindros_series.mean())
+print(cilindros_series.median())
+print(cilindros_series.mode())
+print(cilindros_series.sum())
+```
+
+```{python}
+print(cilindros_series.describe())
+```
+
+```{python}
+#Getting usefull descriptive measures only for some columns (or even rows) of the data set
+print(test[["Modelo", "Cilindros"]].median(0))
+print(test[["Modelo", "Cilindros"]].median(1).head())
+```
+
+```{python}
+# Boolean Indexing
+
+only_toyotas_boolean = test["Marca"] == "TOYOTA"
+only_toyotas_boolean.value_counts()
+print(test.loc[only_toyotas_boolean, "Marca"].head())
+
+#boolean indexing shortcut
+print(test[test["Submarca"] == "CAMRY"])
+
+#Gettin only an specific column after using boolean indexing
+print(test.loc[only_toyotas_boolean, "Marca"].head())
+
+print(test.loc[only_toyotas_boolean, "R. Ciudad (km/l)"].mode())
+
+```
+
+## Exploring Data With Pandas: Intermediate
+
+- Using the **iloc method** to select using integer position. **the loc method is inclusive on the last item, while the iloc method is not**
+- Use of isnull() to get a boolean series of data points where the values are empty and also the use of notnull()
+- **Merging boolean** series with the & operator
+- Mergin boolean series with the | operator
+- Negating a series with the ~ operator
+- Use of **sort_values()**
+- Use of the **unique()** to get unique values
+
+
+
+```{python}
+import numpy as np
+test.loc[2:10, 'Trans.'] = np.nan
+#test.loc[2:10]
+
+null_values = test['Trans.'].isnull()
+null_values.value_counts()
+only_nulls_trans = test[null_values]
+
+# Difference between integer positions and numeric indexing
+print(only_nulls_trans.iloc[4])
+print(only_nulls_trans.loc[4])
+```
+
+```{python}
+#Combining boolean arrays with the & operator
+only_compact_cars = test["Categoría"] == "AUTOS COMPACTOS"
+only_toy_and_compact = only_toyotas_boolean & only_compact_cars
+only_toy_and_compact.value_counts()
+
+print(test[only_toy_and_compact])
+
+
+#Making the same in a single statement
+
+only_toy_and_compact_2 = (test["Marca"] == 'TOYOTA') & (test["Categoría"] == 'AUTOS COMPACTOS')
+print((only_toy_and_compact == only_toy_and_compact_2).value_counts())
+```
+
+```{python}
+#Sorting by name
+sorted_by_brand = test.sort_values('Marca')
+print(sorted_by_brand.head())
+sorted_by_brand_desc = test.sort_values('Marca', ascending=False)
+print(sorted_by_brand_desc.head())
+
+```
+
+```{python}
+brands_in_dataset= test["Marca"].unique()
+print(brands_in_dataset)
+print(type(brands_in_dataset))
+```
+
+## Data Cleaning Basics
+
+- Solving encodings with the data
+- Get the column labels of the data and overwrite the column labels
+- Use the vectorized string methods to clean data.
+- Change the types of a series with the astype() method
+- Use of the dropna() function to delete either all rows (0) or columns(0) that contains at least one data point with NA
+- Save a data frame with **df.to_csv()**
+
+```{python}
+test.columns
+```
+
+```{python}
+#Use of vectorized string operations
+brands = test["Marca"]
+print(brands.head())
+print(brands.str.lower().head())
+```
+
+```{python}
+#Changing the type of a series
+print(test.info())
+test["Modelo"] = test["Modelo"].astype(str)
+print(test.info())
+```
+
+```{python}
+#Change a label
+test.rename({"Modelo": "MODELO"}, axis = 1, inplace=True)
+test.info()
+```
+
+```{python}
+#Use the map method to replace several values on a series with one command
+replacing = {
+    'FORD': 'CHaja'
+}
+
+brands = brands.map(replacing)
+print(brands)
+```
+
+```{python}
+#Usefull command to get how many null values are per column
+print(test.isnull().sum())
+```
+
+```{python}
+print(test.dropna(1).info())
+```
+
+## Guided Project
+
+- Displaying top and last columns only with the data set
+- Using df.drop() to drop certain columns (axis = 1)
+- Use of **sort_index()** to sort by the index
+- Get only a certain number of chars from a series
+- Use the **normalize = True** parameter to get value_counts as a percentage
+
+
+
+```{python}
+test
+```
+
+```{python}
+test["MODELO"].value_counts().sort_index()
+```
+
+```{python}
+test["MODELO"] = test["MODELO"].astype(int)
+between_2014_2016 = (test["MODELO"] >= 2014) & (test["MODELO"] <= 2016)
+test[between_2014_2016]["MODELO"].value_counts().sort_index()
+```
+
+```{python}
+test["Marca"].head().index.tolist()
+```
+
+```{python}
+test["Marca"].value_counts(normalize = True)
+```
+
+```{python}
+# build a custom series with a dictionary
+my_dicti = {"contador": 100, "financiero": 150, "quant": 1000}
+my_series = pd.Series(my_dicti)
+my_series
+
+```
+
+```{python}
+#creating a data frame
+cost_of_living = [15000, 30940, 209384]
+my_dataframe = pd.DataFrame(my_series, columns = ['salary'])
+my_dataframe
+```
